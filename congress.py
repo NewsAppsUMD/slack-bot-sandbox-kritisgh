@@ -10,4 +10,10 @@ url = f"https://api.congress.gov/v3/committee-report/119/hrpt?api_key={congress_
 print(url)
 r = requests.get(url)
 results = r.json()
-print(results)
+# results['reports']
+print(results.keys())
+print(results['reports'][0].keys())
+fr_url = results['reports'][0]['url']
+fr = requests.get(fr_url+f"&api_key={congress_api_key}")
+result = fr.json()
+print(result)
