@@ -24,3 +24,6 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
+
+      - name: Run WMATA alert poster
+        run: python scheduler.py  
