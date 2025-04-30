@@ -32,10 +32,12 @@ def fetch_wmata_alerts():
 
             cache_key = f"{bus_num}|{desc}"
             last_posted = alert_cache.get(cache_key)
-
-            if not last_posted or (now - last_posted > timedelta(minutes=15)):
-                alert_cache[cache_key] = now
+            if True:
                 messages.append(f"• *Bus {bus_num}* – {desc}")
+
+            # if not last_posted or (now - last_posted > timedelta(minutes=15)):
+            #     alert_cache[cache_key] = now
+            #     messages.append(f"• *Bus {bus_num}* – {desc}")
 
         if messages:
             alert_text = (
