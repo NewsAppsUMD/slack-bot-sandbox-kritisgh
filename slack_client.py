@@ -6,7 +6,7 @@ from slack_sdk.errors import SlackApiError
 import requests
 from datetime import datetime
 
-slack_token = os.environ.get("SLACK_BOT_TOKEN")
+slack_token = os.environ.get("SLACK_API_TOKEN")
 wmata_api_key = os.environ.get("WMATA_API_KEY")
 slack_client = WebClient(token=slack_token)
 
@@ -27,9 +27,10 @@ def handle_bus_command(request):
 
     matches = []
     for incident in incidents:
-        route = incident.get("RoutesAffected", "")
-        if query.lower() in route.lower():
-            matches.append(f"• *Bus {route}* – {incident.get('Description', '').strip()}")
+        routes = incident.get("RoutesAffected", [])
+        route_list = ", ".join(routes) if isinstance(routes, list) else routes
+        if query.lower() in route_list.lower():
+            matches.append(f"• *Bus {route_list}* – {incident.get('Description', '').strip()}")
 
     if matches:
         result_text = "\n".join(matches)
@@ -54,7 +55,10 @@ def handle_alerts_command(request):
     if not incidents:
         return {"response_type": "ephemeral", "text": "✅ There are no current WMATA bus alerts."}
 
-    result_text = "\n".join([f"• *Bus {inc['RoutesAffected']}* – {inc['Description']}" for inc in incidents])
+    result_text = "\n".join([
+        f"• *Bus {', '.join(inc['RoutesAffected']) if isinstance(inc['RoutesAffected'], list) else inc['RoutesAffected']}* – {inc['Description']}"
+        for inc in incidents
+    ])
     now = datetime.now().strftime('%b %d, %Y – %I:%M %p')
     return {"response_type": "ephemeral", "text": f"🚨 *Current WMATA Bus Alerts* ({now})\n\n{result_text}"}
 

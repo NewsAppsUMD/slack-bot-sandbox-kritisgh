@@ -4,7 +4,7 @@ import requests
 from slack_sdk import WebClient
 from datetime import datetime, timedelta
 
-slack_token = os.environ.get("SLACK_BOT_TOKEN")
+slack_token = os.environ.get("SLACK_API_TOKEN")
 wmata_api_key = os.environ.get("WMATA_API_KEY")
 slack_channel = os.environ.get("SLACK_CHANNEL", "#general")
 slack_client = WebClient(token=slack_token)
@@ -23,7 +23,8 @@ def fetch_wmata_alerts():
         messages = []
 
         for incident in incidents:
-            bus_num = incident.get("RoutesAffected", "").strip()
+            routes = incident.get("RoutesAffected", [])
+            bus_num = ", ".join(routes) if isinstance(routes, list) else routes
             desc = incident.get("Description", "").strip()
 
             if not bus_num or not desc:
@@ -42,6 +43,9 @@ def fetch_wmata_alerts():
                 + "\n".join(messages)
             )
             slack_client.chat_postMessage(channel=slack_channel, text=alert_text)
+            print(f"✅ Posted {len(messages)} alert(s) to Slack.")
+        else:
+            print("ℹ️ No new WMATA alerts to post.")
 
     except Exception as e:
-        print(f"Error in fetch_wmata_alerts: {e}")
+        print(f"❌ Error in fetch_wmata_alerts: {e}")
