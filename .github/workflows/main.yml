@@ -1,10 +1,8 @@
-.github/workflows/post_alerts.yml
-
 name: Post WMATA Alerts to Slack
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # Runs every 5 minutes
+    - cron: '*/5 * * * *'  # every 5 minutes
   workflow_dispatch:
 
 jobs:
@@ -16,7 +14,7 @@ jobs:
       WMATA_API_KEY: ${{ secrets.WMATA_API_KEY }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v3
 
       - name: Set up Python
@@ -25,8 +23,4 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-
-      - name: Run WMATA alert poster
-        run: python scheduler.py
+        run: pip install -r requirements.txt
