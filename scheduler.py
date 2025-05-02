@@ -88,5 +88,7 @@ def fetch_wmata_alerts():
     except Exception as e:
         print(f"❌ Error in fetch_wmata_alerts: {e}")
 
-# Run the function (uncomment for local test)
-fetch_wmata_alerts()
+# # Run the function (uncomment for local test)
+# fetch_wmata_alerts()
+if __name__ == "__main__":
+    fetch_wmata_alerts()
