@@ -1,31 +1,10 @@
 import os
 import requests
 from slack_sdk import WebClient
-from datetime import datetime, timedelta
-from dotenv import load_dotenv
-
-# Load variables from a .env file if available (for local testing)
-load_dotenv()
-
-# Get from environment or fallback
-slack_token = os.getenv("SLACK_API_TOKEN", "your-fallback-slack-token")
-wmata_api_key = os.getenv("WMATA_API_KEY", "your-fallback-wmata-key")
-slack_channel = os.getenv("SLACK_CHANNEL", "#general")
-
-
-slack_client = WebClient(token=slack_token)
-
-# cache of posted alerts to prevent duplicates
-alert_cache = {}  # {"BusNum|Description": datetime_of_last_post}
-#im currently not working on not posting duplicates^
-
-import os
-import requests
-from slack_sdk import WebClient
 from datetime import datetime
 from dotenv import load_dotenv
 
-# Load environment variables
+# Load environment variables from a .env file (useful for local testing)
 load_dotenv()
 
 # Get environment variables or fallback values
@@ -33,15 +12,15 @@ slack_token = os.getenv("SLACK_API_TOKEN", "your-fallback-slack-token")
 wmata_api_key = os.getenv("WMATA_API_KEY", "your-fallback-wmata-key")
 slack_channel = os.getenv("SLACK_CHANNEL", "#general")
 
-# Slack client setup
+# Initialize Slack client
 slack_client = WebClient(token=slack_token)
 
-# Optional: cache for alert deduplication
+# Optional: cache for deduplication
 alert_cache = {}
 
 def fetch_wmata_alerts():
     try:
-        # Debug: confirm env vars
+        # Debug: confirm environment variables
         print(f"SLACK_API_TOKEN present: {bool(slack_token)}")
         print(f"WMATA_API_KEY present: {bool(wmata_api_key)}")
         print(f"SLACK_CHANNEL is: {slack_channel}")
@@ -56,9 +35,9 @@ def fetch_wmata_alerts():
             return
 
         data = response.json()
+        incidents = data.get("BusIncidents", [])
         print(f"Raw Response: {data}")
 
-        incidents = data.get("BusIncidents", [])
         now = datetime.now()
         messages = []
 
@@ -73,7 +52,7 @@ def fetch_wmata_alerts():
             cache_key = f"{bus_num}|{desc}"
             if cache_key not in alert_cache:
                 messages.append(f"• *Bus {bus_num}* – {desc}")
-                alert_cache[cache_key] = now  # cache this message
+                alert_cache[cache_key] = now
 
         if messages:
             alert_text = (
@@ -88,7 +67,5 @@ def fetch_wmata_alerts():
     except Exception as e:
         print(f"❌ Error in fetch_wmata_alerts: {e}")
 
-# # Run the function (uncomment for local test)
-# fetch_wmata_alerts()
 if __name__ == "__main__":
     fetch_wmata_alerts()
