@@ -18,3 +18,5 @@ Response 1: No current alerts for Bus 83.
 or 
 Response 2: Expect delays in both directions on Route 83 because of operator availability. Check your bus location by visiting https://buseta.wmata.com/#83 
 
+I learnt a lot about debugging here and I am also trying to understand github actions logs but I mostly have not understood it.
+

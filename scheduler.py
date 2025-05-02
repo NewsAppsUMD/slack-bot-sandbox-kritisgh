@@ -17,7 +17,7 @@ slack_client = WebClient(token=slack_token)
 
 # cache of posted alerts to prevent duplicates
 alert_cache = {}  # {"BusNum|Description": datetime_of_last_post}
-
+#im currently not working on not posting duplicates^
 
 import os
 import requests
