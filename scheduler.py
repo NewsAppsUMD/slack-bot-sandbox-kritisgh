@@ -19,17 +19,46 @@ slack_client = WebClient(token=slack_token)
 alert_cache = {}  # {"BusNum|Description": datetime_of_last_post}
 
 
+import os
+import requests
+from slack_sdk import WebClient
+from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Get environment variables or fallback values
+slack_token = os.getenv("SLACK_API_TOKEN", "your-fallback-slack-token")
+wmata_api_key = os.getenv("WMATA_API_KEY", "your-fallback-wmata-key")
+slack_channel = os.getenv("SLACK_CHANNEL", "#general")
+
+# Slack client setup
+slack_client = WebClient(token=slack_token)
+
+# Optional: cache for alert deduplication
+alert_cache = {}
+
 def fetch_wmata_alerts():
     try:
-        # 🔍 DEBUG: Check if secrets were loaded
+        # Debug: confirm env vars
         print(f"SLACK_API_TOKEN present: {bool(slack_token)}")
         print(f"WMATA_API_KEY present: {bool(wmata_api_key)}")
         print(f"SLACK_CHANNEL is: {slack_channel}")
 
+        url = "https://api.wmata.com/Incidents.svc/json/BusIncidents"
         headers = {"api_key": wmata_api_key}
-        response = requests.get("https://api.wmata.com/Incidents.svc/json/BusIncidents", headers=headers)
-        incidents = response.json().get("BusIncidents", [])
+        response = requests.get(url, headers=headers)
 
+        print(f"HTTP Status Code: {response.status_code}")
+        if response.status_code != 200:
+            print(f"❌ Failed to fetch data: {response.text}")
+            return
+
+        data = response.json()
+        print(f"Raw Response: {data}")
+
+        incidents = data.get("BusIncidents", [])
         now = datetime.now()
         messages = []
 
@@ -42,9 +71,9 @@ def fetch_wmata_alerts():
                 continue
 
             cache_key = f"{bus_num}|{desc}"
-            last_posted = alert_cache.get(cache_key)
-            if True:
+            if cache_key not in alert_cache:
                 messages.append(f"• *Bus {bus_num}* – {desc}")
+                alert_cache[cache_key] = now  # cache this message
 
         if messages:
             alert_text = (
@@ -58,3 +87,6 @@ def fetch_wmata_alerts():
 
     except Exception as e:
         print(f"❌ Error in fetch_wmata_alerts: {e}")
+
+# Run the function (uncomment for local test)
+fetch_wmata_alerts()
