@@ -15,6 +15,11 @@ alert_cache = {}  # {"BusNum|Description": datetime_of_last_post}
 
 def fetch_wmata_alerts():
     try:
+        # 🔍 DEBUG: Check if secrets were loaded
+        print(f"SLACK_API_TOKEN present: {bool(slack_token)}")
+        print(f"WMATA_API_KEY present: {bool(wmata_api_key)}")
+        print(f"SLACK_CHANNEL is: {slack_channel}")
+
         headers = {"api_key": wmata_api_key}
         response = requests.get("https://api.wmata.com/Incidents.svc/json/BusIncidents", headers=headers)
         incidents = response.json().get("BusIncidents", [])
@@ -34,10 +39,6 @@ def fetch_wmata_alerts():
             last_posted = alert_cache.get(cache_key)
             if True:
                 messages.append(f"• *Bus {bus_num}* – {desc}")
-
-            # if not last_posted or (now - last_posted > timedelta(minutes=15)):
-            #     alert_cache[cache_key] = now
-            #     messages.append(f"• *Bus {bus_num}* – {desc}")
 
         if messages:
             alert_text = (
