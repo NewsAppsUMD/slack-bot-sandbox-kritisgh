@@ -1,12 +1,18 @@
-# scheduler.py
 import os
 import requests
 from slack_sdk import WebClient
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
 
-slack_token = os.environ.get("SLACK_API_TOKEN")
-wmata_api_key = os.environ.get("WMATA_API_KEY")
-slack_channel = os.environ.get("SLACK_CHANNEL", "#general")
+# Load variables from a .env file if available (for local testing)
+load_dotenv()
+
+# Get from environment or fallback
+slack_token = os.getenv("SLACK_API_TOKEN", "your-fallback-slack-token")
+wmata_api_key = os.getenv("WMATA_API_KEY", "your-fallback-wmata-key")
+slack_channel = os.getenv("SLACK_CHANNEL", "#general")
+
+
 slack_client = WebClient(token=slack_token)
 
 # cache of posted alerts to prevent duplicates
