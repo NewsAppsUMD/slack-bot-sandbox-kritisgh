@@ -25,7 +25,7 @@ def slash_alerts():
 
 
 
-@app.route("/help", methods=["POST"])
+@app.route("/slash/help", methods=["POST"])
 def help_command():
     help_text = (
         "*WMATA Slack Bot Help*\n\n"
