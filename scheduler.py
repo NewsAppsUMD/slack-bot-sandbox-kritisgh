@@ -1,22 +1,26 @@
 import os
+import csv
 import requests
 from slack_sdk import WebClient
 from datetime import datetime
 from dotenv import load_dotenv
+from zoneinfo import ZoneInfo 
 
-# Load environment variables from a .env file (useful for local testing)
+# Load environment variables (helpful for local testing)
 load_dotenv()
 
-# Get environment variables or fallback values
+# Environment variables
 slack_token = os.getenv("SLACK_API_TOKEN", "your-fallback-slack-token")
 wmata_api_key = os.getenv("WMATA_API_KEY", "your-fallback-wmata-key")
 slack_channel = os.getenv("SLACK_CHANNEL", "#general")
 
-# Initialize Slack client
+# Slack client
 slack_client = WebClient(token=slack_token)
 
-# Optional: cache for deduplication
+# Cache for deduplication (optional) and route lookup
 alert_cache = {}
+bus_alert_lookup = {}  # Populated for /route command
+
 
 def fetch_wmata_alerts():
     try:
@@ -37,31 +41,46 @@ def fetch_wmata_alerts():
         print(f"Raw Response: {data}")
 
         incidents = data.get("BusIncidents", [])
-        now = datetime.now()
+        now = datetime.now(ZoneInfo("America/New_York"))
 
         delays = set()
         detours = set()
 
-        for incident in incidents:
-            routes = incident.get("RoutesAffected", [])
-            desc = incident.get("Description", "").strip().lower()
+        with open("alerts.csv", mode="a", newline="", encoding="utf-8") as csvfile:
+            writer = csv.writer(csvfile)
 
-            # Handle both string and list cases
-            if isinstance(routes, str):
-                route_list = [r.strip() for r in routes.split(",") if r.strip()]
-            elif isinstance(routes, list):
-                route_list = [r.strip() for r in routes if isinstance(r, str)]
-            else:
-                continue
+            for incident in incidents:
+                routes = incident.get("RoutesAffected", [])
+                desc = incident.get("Description", "").strip()
 
-            if not route_list or not desc:
-                continue
+                if not desc:
+                    continue
+                desc_lower = desc.lower()
 
-            # Categorize
-            if "detour" in desc:
-                detours.update(route_list)
-            elif any(word in desc for word in ["delay", "delays", "experiencing"]):
-                delays.update(route_list)
+                # Normalize routes
+                if isinstance(routes, str):
+                    route_list = [r.strip() for r in routes.split(",") if r.strip()]
+                elif isinstance(routes, list):
+                    route_list = [r.strip() for r in routes if isinstance(r, str)]
+                else:
+                    continue
+
+                if not route_list:
+                    continue
+
+                # Save full message for /route
+                for route in route_list:
+                    msg = f"Bus {route} – {desc}"
+                    bus_alert_lookup[route.upper()] = msg
+
+                    # Write to CSV
+                    writer.writerow([now.isoformat(), route, desc])
+
+                # Categorize
+                if "detour" in desc_lower:
+                    detours.update(route_list)
+                elif any(word in desc_lower for word in ["delay", "delays", "experiencing"]):
+                    delays.update(route_list)
 
         if not delays and not detours:
             print("ℹ️ No new categorized alerts to post.")
@@ -83,8 +102,10 @@ def fetch_wmata_alerts():
 
         slack_client.chat_postMessage(channel=slack_channel, text=alert_text)
         print(f"✅ Posted alert to Slack.")
+
     except Exception as e:
         print(f"❌ Error in fetch_wmata_alerts: {e}")
+
 
 if __name__ == "__main__":
     fetch_wmata_alerts()
