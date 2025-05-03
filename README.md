@@ -21,6 +21,14 @@ Response 2: Expect delays in both directions on Route 83 because of operator ava
 I learnt a lot about debugging here and I am also trying to understand github actions logs but I mostly have not understood it.
 
 # March 28 Update 
+I am now logging the delays/detours into a csv file. It also deduplicates the file by checking against the IncidentID so I don't have the same alert appended to the csv file each time the code runs. I have also formatted the string into a collated list of delays and detours. Before, it was simply a massive list of all the incidents for WMATA bus and rail alerts which was flooding the Slack channel. The bus lists are also hyperlinked to their WMATA webpage if one wants to see further. I exposed the codespace to a public URL for incorporating /slash commands. This was done using ngrok. I have implemented two /slash commands: /route and /help. /route "insert bus number" will give you detailed information on a bus that has been delayed. If one inputs a bus number with no alerts, the bot will return, "No bus alerts for 'x'. /help will give instructions on how the bot is to be operated. 
+
+**Issues / what remains to be done:**  
+The url for ngrok is different each time it is run. This needs to be passed to the Slack app route for users to be able to use the /commands. A permanent url is paid on ngrok. I have to figure out a way to expose the codespace to a public url that does not change that slack can access. Or a way to pass the new ngrok link each time it is generated to Slack. 
+My github actions is still not working even after adding Secrets to Actions as Repository Secret.
+
+**Things I have learnt:**  
+The routing system for Flask finally became intuitive and clear to me when I added the slash commands to Slack which needed to be routed in the Flask app. I really enjoyed this process of creating /commands and I am excited about the possibilities it opens up for a full fledged bot app. I am thinking maybe even my The Most Socially Spoilt Bus Stop Around You could be a bot if one is able to get the user to enter a location somehow to the bot. 
 
 
 
