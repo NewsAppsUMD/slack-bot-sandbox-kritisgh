@@ -19,9 +19,27 @@ def slash_bus():
 def slash_alerts():
     return handle_alerts_command(request)
 
-@app.route("/slash/help", methods=["POST"])
-def slash_help():
-    return handle_help_command()
+# @app.route("/slash/help", methods=["POST"])
+# def slash_help():
+#     return handle_help_command()
+
+
+
+@app.route("/help", methods=["POST"])
+def help_command():
+    help_text = (
+        "*WMATA Slack Bot Help*\n\n"
+        "• `/route [bus number]` – Get a detailed alert for a specific route (e.g., `/route T2`)\n"
+        "• `/help` – Show this help message\n"
+        "\n"
+        "Alerts are pulled live from WMATA's Bus Incidents API. Routes with active delays or detours will show alerts here."
+    )
+
+    return jsonify({
+        "response_type": "ephemeral",
+        "text": help_text
+    })
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

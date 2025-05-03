@@ -20,7 +20,6 @@ alert_cache = {}
 
 def fetch_wmata_alerts():
     try:
-        # Debug: confirm environment variables
         print(f"SLACK_API_TOKEN present: {bool(slack_token)}")
         print(f"WMATA_API_KEY present: {bool(wmata_api_key)}")
         print(f"SLACK_CHANNEL is: {slack_channel}")
@@ -35,35 +34,55 @@ def fetch_wmata_alerts():
             return
 
         data = response.json()
-        incidents = data.get("BusIncidents", [])
         print(f"Raw Response: {data}")
 
+        incidents = data.get("BusIncidents", [])
         now = datetime.now()
-        messages = []
+
+        delays = set()
+        detours = set()
 
         for incident in incidents:
             routes = incident.get("RoutesAffected", [])
-            bus_num = ", ".join(routes) if isinstance(routes, list) else routes
-            desc = incident.get("Description", "").strip()
+            desc = incident.get("Description", "").strip().lower()
 
-            if not bus_num or not desc:
+            # Handle both string and list cases
+            if isinstance(routes, str):
+                route_list = [r.strip() for r in routes.split(",") if r.strip()]
+            elif isinstance(routes, list):
+                route_list = [r.strip() for r in routes if isinstance(r, str)]
+            else:
                 continue
 
-            cache_key = f"{bus_num}|{desc}"
-            if cache_key not in alert_cache:
-                messages.append(f"• *Bus {bus_num}* – {desc}")
-                alert_cache[cache_key] = now
+            if not route_list or not desc:
+                continue
 
-        if messages:
-            alert_text = (
-                f"🚨 *WMATA Bus Service Alerts* ({now.strftime('%b %d, %Y – %I:%M %p')})\n\n"
-                + "\n".join(messages)
-            )
-            slack_client.chat_postMessage(channel=slack_channel, text=alert_text)
-            print(f"✅ Posted {len(messages)} alert(s) to Slack.")
-        else:
-            print("ℹ️ No new WMATA alerts to post.")
+            # Categorize
+            if "detour" in desc:
+                detours.update(route_list)
+            elif any(word in desc for word in ["delay", "delays", "experiencing"]):
+                delays.update(route_list)
 
+        if not delays and not detours:
+            print("ℹ️ No new categorized alerts to post.")
+            return
+
+        def make_links(route_set):
+            return ", ".join([f"<https://buseta.wmata.com/#{r}|{r}>" for r in sorted(route_set)])
+
+        alert_sections = []
+        if delays:
+            alert_sections.append(f"*Delays*\n{make_links(delays)}")
+        if detours:
+            alert_sections.append(f"*Detours*\n{make_links(detours)}")
+
+        alert_text = (
+            f"🚨 *WMATA Bus Service Alerts* ({now.strftime('%b %d, %Y – %I:%M %p')})\n\n"
+            + "\n\n".join(alert_sections)
+        )
+
+        slack_client.chat_postMessage(channel=slack_channel, text=alert_text)
+        print(f"✅ Posted alert to Slack.")
     except Exception as e:
         print(f"❌ Error in fetch_wmata_alerts: {e}")
 
