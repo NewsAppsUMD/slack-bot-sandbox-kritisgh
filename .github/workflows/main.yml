@@ -8,10 +8,14 @@ on:
 jobs:
   post-alerts:
     runs-on: ubuntu-latest
-
     steps:
+
       - name: Checkout repo
         uses: actions/checkout@v3
+        with:
+          # allow this job to push back to the repo
+          persist-credentials: true
+          fetch-depth: 0           # get full history so that pushes will work reliably
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -24,6 +28,23 @@ jobs:
       - name: Run WMATA alert poster
         env:
           SLACK_API_TOKEN: ${{ secrets.SLACK_API_TOKEN }}
-          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
-          WMATA_API_KEY: ${{ secrets.WMATA_API_KEY }}
+          SLACK_CHANNEL:   ${{ secrets.SLACK_CHANNEL }}
+          WMATA_API_KEY:   ${{ secrets.WMATA_API_KEY }}
         run: python scheduler.py
+
+      - name: Commit & push alerts.csv
+        # ensure GITHUB_TOKEN is available to git
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add alerts.csv
+
+          # only commit if there are changes
+          if git diff --cached --quiet; then
+            echo "✅ No changes to alerts.csv"
+          else
+            git commit -m "chore: update alerts.csv via GitHub Actions"
+            git push
+          fi
