@@ -30,5 +30,22 @@ My github actions is still not working even after adding Secrets to Actions as R
 **Things I have learnt:**  
 The routing system for Flask finally became intuitive and clear to me when I added the slash commands to Slack which needed to be routed in the Flask app. I really enjoyed this process of creating /commands and I am excited about the possibilities it opens up for a full fledged bot app. I am thinking maybe even my The Most Socially Spoilt Bus Stop Around You could be a bot if one is able to get the user to enter a location somehow to the bot. 
 
+# Final Submission
+
+**Process**  
+I first started by following Harper Reed's LLM codegen workflow. This was very helpful in scoping my bot and revealing some things I had not considered. This process really helped me in figuring out what the final message in Slack should look like. 
+The fetch_wmata_alerts checks for keywords in the description and classifies accordingly. 'Detour' goes into the "detours" set. 'Delay', 'delays' 'experiencing' goes into "Delay" set. 
+The slack bot gives a list of clickable WMATA links for each route that is delayed or detoured and only posts one message summarizing delays and detours.
+I learnt to check that my API keys do not have any trailing characters to them and just generally learnt a lot about setting up API credentials in the proper places instead of explicitly declaring them in my file. 
+
+*Do I need to store this data somehow? What would that look like?*
+I am logging all the delays in alerts.csv. I like the table I am getting. I store the timestamp, the incidentID, the bus number and the reason for delay. In the future I could have a column that clearly defines whether it is a delay or a detour. Only new incidents are appended to the CSV which I check using the IncidentID. For each incident returned by WMATA, I strip out its IncidentID. If that ID is not already in logged_ids, I add it to the list. In the future, I could use this data to see if there are any trends in delays and detours. 
+
+I wasn't able to set up the user input for this bot permanently. I wanted people to be able to look up whether a specific route was running late or was on a detour. This was set up temporarily but I aim to set up a public URL permanently that Slack can hit the endpoint for. 
+
+*What does a more-useful version of this bot do? What would that require?*
+I think if the user was able to pre-enter a list of routes that they are interested in and only received slack bot alerts for that, that would be great. They could enter another command to get the full list if they are traveling and need to see the whole list. 
+
+
 
 
