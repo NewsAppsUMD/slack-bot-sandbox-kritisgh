@@ -113,7 +113,8 @@ def fetch_wmata_alerts():
         print("✅ Posted alert to Slack.")
 
     except Exception as e:
-        print(f"❌ Error in fetch_wmata_alerts: {e}")
+        raise
+#        print(f"❌ Error in fetch_wmata_alerts: {e}")
 
 if __name__ == "__main__":
     fetch_wmata_alerts()
